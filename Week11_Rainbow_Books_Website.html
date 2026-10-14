@@ -1,0 +1,368 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;font-size:14px}</style></head><body><title>Rainbow Books Prototype</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+/* Layout: sticky top bar, centered 1120px column, card grids that wrap. Rainbow spine strip is the one signature element. */
+:root{
+  --bg:#F6F7FB; --surface:#FFFFFF; --ink:#161B33; --muted:#566079; --line:#DCE0EC;
+  --accent:#2F44C4; --accent-ink:#FFFFFF; --soft:#EAEDFB; --gold:#F0A92E;
+  --ok:#17744A; --okbg:#E1F4EA; --warn:#9A4A06; --warnbg:#FDEBD3; --bad:#B3261E; --badbg:#FBE4E2;
+  --s1:#E5484D; --s2:#F2994A; --s3:#F2C94C; --s4:#3FA66B; --s5:#3F7DE0; --s6:#8A5CD6;
+  --display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif; --body:'Source Sans 3','Segoe UI',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1224; --surface:#181C36; --ink:#EEF0FA; --muted:#A3ABC8; --line:#2B3156;
+  --accent:#8F9DFF; --accent-ink:#0F1224; --soft:#222750; --gold:#F4B94C;
+  --ok:#5FD39A; --okbg:#143826; --warn:#F2A65A; --warnbg:#3A2812; --bad:#FF8F88; --badbg:#42201E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1224; --surface:#181C36; --ink:#EEF0FA; --muted:#A3ABC8; --line:#2B3156;
+  --accent:#8F9DFF; --accent-ink:#0F1224; --soft:#222750; --gold:#F4B94C;
+  --ok:#5FD39A; --okbg:#143826; --warn:#F2A65A; --warnbg:#3A2812; --bad:#FF8F88; --badbg:#42201E; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;margin:0}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);line-height:1.15;margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:clamp(2rem,4.6vw,3.2rem)} h2{font-size:1.6rem} h3{font-size:1.1rem}
+p{margin:0}
+a{color:var(--accent)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.proto{background:var(--ink);color:var(--bg);font-size:.85rem;text-align:center;padding:6px 16px}
+.spine{height:5px;background:linear-gradient(90deg,var(--s1) 0 16.6%,var(--s2) 0 33.3%,var(--s3) 0 50%,var(--s4) 0 66.6%,var(--s5) 0 83.3%,var(--s6) 0)}
+header.top{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.bar{display:flex;align-items:center;gap:16px;padding-block:12px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:1.3rem;cursor:pointer;background:none;border:0;padding:0}
+nav{display:flex;gap:4px;flex-wrap:wrap}
+nav button{background:none;border:0;padding:8px 10px;border-radius:8px;cursor:pointer;font-weight:600;color:var(--muted)}
+nav button:hover{background:var(--soft);color:var(--ink)}
+nav button[aria-current="page"]{color:var(--accent);background:var(--soft)}
+.grow{flex:1}
+.search{display:flex;gap:0;min-width:0}
+.search input{min-width:0;width:150px;border:1px solid var(--line);border-right:0;border-radius:8px 0 0 8px;padding:8px 12px;background:var(--bg)}
+.search button{border-radius:0 8px 8px 0}
+.btn{background:var(--accent);color:var(--accent-ink);border:1px solid var(--accent);border-radius:8px;padding:9px 16px;font-weight:700;cursor:pointer}
+.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn.small{padding:6px 12px;font-size:.9rem}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.cartbtn{position:relative}
+.count{background:var(--gold);color:#161B33;border-radius:99px;font-size:.75rem;padding:1px 7px;margin-left:6px;font-weight:700}
+main{padding-block:28px 56px;min-height:60vh}
+.hero{display:grid;grid-template-columns:1.15fr .85fr;gap:32px;align-items:center;padding-block:12px 28px}
+.hero p.lead{font-size:1.15rem;color:var(--muted);max-width:52ch;margin-top:14px}
+.hero .cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
+.shelf{display:flex;gap:10px;align-items:flex-end;justify-content:center}
+.eyebrow{font-size:.78rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:700}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-block:12px 36px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.tile .mark{width:36px;height:6px;border-radius:3px}
+.tile p{color:var(--muted)}
+.tile button{align-self:flex-start;margin-top:auto}
+.sect{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:20px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.card h3{font-size:1rem;min-height:2.3em}
+.meta{color:var(--muted);font-size:.9rem}
+.price{font-weight:700}
+.cover{aspect-ratio:2/3;max-width:100%;border-radius:4px 8px 8px 4px;padding:12px 10px;display:flex;flex-direction:column;justify-content:space-between;color:#fff;font-family:var(--display);box-shadow:inset 6px 0 0 rgba(0,0,0,.18);overflow:hidden;cursor:pointer;border:0;text-align:left;width:100%}
+.cover b{font-size:1.05rem;line-height:1.15;font-weight:700;overflow-wrap:anywhere}
+.cover span{font-size:.72rem;opacity:.9;font-family:var(--body);text-transform:uppercase;letter-spacing:.08em}
+.chip{display:inline-block;white-space:nowrap;border-radius:99px;padding:2px 10px;font-size:.78rem;font-weight:700}
+.chip.ok{background:var(--okbg);color:var(--ok)} .chip.warn{background:var(--warnbg);color:var(--warn)} .chip.bad{background:var(--badbg);color:var(--bad)} .chip.info{background:var(--soft);color:var(--accent)}
+.layout{display:grid;grid-template-columns:240px 1fr;gap:28px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;min-width:0}
+.panel + .panel{margin-top:16px}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:14px;min-width:0}
+.field label,.legend{font-weight:700;font-size:.9rem}
+.field input,.field select,.field textarea{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:9px 12px;width:100%;min-width:0}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;background:var(--bg)}
+.opt:has(input:checked){border-color:var(--accent);background:var(--soft)}
+.opt small{display:block;color:var(--muted)}
+.check{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.detail{display:grid;grid-template-columns:260px 1fr;gap:32px;align-items:start}
+.crumbs{margin-bottom:16px;color:var(--muted);font-size:.9rem}
+.crumbs button{background:none;border:0;color:var(--accent);cursor:pointer;padding:0;font:inherit;text-decoration:underline}
+.steps{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.step{padding:6px 14px;border-radius:99px;background:var(--soft);color:var(--muted);font-weight:700;font-size:.9rem}
+.step.on{background:var(--accent);color:var(--accent-ink)}
+.two{display:grid;grid-template-columns:1.4fr 1fr;gap:24px;align-items:start}
+.sum div{display:flex;justify-content:space-between;padding:6px 0}
+.sum .tot{border-top:1px solid var(--line);margin-top:6px;padding-top:12px;font-weight:700;font-size:1.15rem}
+.notice{background:var(--warnbg);color:var(--warn);border-radius:10px;padding:10px 14px;font-size:.92rem;margin-bottom:16px}
+.okmsg{background:var(--okbg);color:var(--ok);border-radius:10px;padding:12px 14px;margin-top:12px;font-weight:600}
+.track{display:flex;gap:0;margin-block:18px;flex-wrap:wrap}
+.track div{flex:1;min-width:130px;padding:10px 12px;background:var(--soft);color:var(--muted);font-weight:700;font-size:.9rem;border-right:3px solid var(--surface)}
+.track div.on{background:var(--ok);color:#fff}
+.tiers{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.tier.pick{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.tier ul{margin:8px 0 0;padding-left:18px;color:var(--muted)}
+.evt{display:grid;grid-template-columns:76px 1fr auto;gap:16px;align-items:center}
+.date{background:var(--soft);border-radius:10px;text-align:center;padding:8px 4px;font-family:var(--display)}
+.date b{display:block;font-size:1.6rem;line-height:1}
+.date span{font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.qty{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.qty button{background:var(--soft);border:0;width:30px;height:30px;cursor:pointer;font-weight:700;color:var(--ink)}
+.qty span{min-width:32px;text-align:center;font-variant-numeric:tabular-nums}
+.link{background:none;border:0;color:var(--accent);cursor:pointer;text-decoration:underline;padding:0}
+footer{border-top:1px solid var(--line);background:var(--surface);padding-block:28px;color:var(--muted);font-size:.92rem}
+footer .cols{display:flex;gap:32px;flex-wrap:wrap;justify-content:space-between}
+@media (max-width:820px){
+  .hero,.layout,.detail,.two{grid-template-columns:1fr}
+  .evt{grid-template-columns:64px 1fr}
+  .evt .btn{grid-column:1 / -1}
+  .search{flex:1 1 100%}.search input{flex:1;width:auto}
+  .shelf>div{flex:1 1 0;min-width:0;width:auto!important}
+  .bar{gap:10px}
+  .row2{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:no-preference){.btn{transition:filter .15s}}
+</style>
+
+<div class="proto">Prototype website for ISYS1051 Assessment 2. Not a real store: no orders are placed and no payments are taken.</div>
+<div class="spine"></div>
+<header class="top"><div class="wrap bar">
+  <button class="logo" data-go="home" aria-label="Rainbow Books home"><svg width="34" height="20" viewBox="0 0 34 20" aria-hidden="true"><g fill="none" stroke-width="3"><path d="M2 19a15 15 0 0 1 30 0" stroke="#E5484D"/><path d="M5.5 19a11.5 11.5 0 0 1 23 0" stroke="#F2994A"/><path d="M9 19a8 8 0 0 1 16 0" stroke="#F2C94C"/><path d="M12.5 19a4.5 4.5 0 0 1 9 0" stroke="#3F7DE0"/></g></svg>Rainbow Books</button>
+  <nav id="nav" aria-label="Main"></nav>
+  <div class="grow"></div>
+  <form class="search" id="topsearch" role="search"><input id="q" type="search" placeholder="Title, author or ISBN" aria-label="Search books"><button class="btn" type="submit">Search</button></form>
+  <button class="btn ghost cartbtn" data-go="cart" id="cartbtn">Cart<span class="count" id="count">0</span></button>
+</div></header>
+<main><div class="wrap" id="view"></div></main>
+<footer><div class="wrap cols">
+  <div><strong style="font-family:var(--display)">Rainbow Books</strong><br>Books at the end of the rainbow since 1946.<br>Retail and Rainbow Publishing, Victoria.</div>
+  <div>Customer service: 1300 000 000<br>help@rainbowbooks.example<br>Mon to Fri 9am to 5pm</div>
+  <div>Prototype built for the Rainbow Books case study.<br>All books, prices, stock levels and events shown are made-up examples.</div>
+</div></footer>
+
+<script>
+(function(){
+var COLORS=[['#E5484D','#9B1C2C'],['#F2994A','#B4540C'],['#3FA66B','#1B6B40'],['#3F7DE0','#1D3F96'],['#8A5CD6','#4B2A93'],['#2A9D9D','#115C62']];
+var BOOKS=[
+{id:1,t:'The Lantern Year',a:'Veronica Watson',c:'Fiction',p:24.99,rb:1,d:'A year in a Gippsland lighthouse town, told through the letters its keeper never sent.'},
+{id:2,t:'Salt Roads',a:'Veronica Watson',c:'Fiction',p:22.99,rb:1,d:'Two sisters drive the length of the Nullarbor to settle their mother\'s estate and her secrets.'},
+{id:3,t:'Ledger of Small Hours',a:'Dr Jonathan Croft',c:'Non-fiction',p:21.99,rb:1,d:'Essays on night work, insomnia and the people who keep cities running after dark.'},
+{id:4,t:'Where the River Bends',a:'Mira Okonkwo',c:'Children',p:15.99,rb:0,d:'Ages 8 to 11. A school holiday, a borrowed canoe and a map that does not match the river.'},
+{id:5,t:'Tide Pool Detectives',a:'Aaron Lim',c:'Children',p:14.99,rb:0,d:'Ages 6 to 9. Who is stealing the hermit crabs\' shells? A rock pool mystery with real field notes.'},
+{id:6,t:'A Short History of Collins Street',a:'Helen Ward',c:'Non-fiction',p:34.99,rb:0,d:'From the first land sales to the arcades: a walking guide with archive photographs.'},
+{id:7,t:'The Night Shift Club',a:'Priya Nair',c:'Mystery',p:19.99,rb:0,d:'Five hospital cleaners notice what the doctors miss. A cosy mystery with a sharp edge.'},
+{id:8,t:'Quiet Algorithms',a:'Daniel Reyes',c:'Technology',p:39.99,rb:0,d:'How recommendation systems shape what we read, buy and believe, explained without jargon.'},
+{id:9,t:'Seven Kitchens',a:'Sofia Marchetti',c:'Cooking',p:44.99,rb:0,d:'Recipes from seven Melbourne home kitchens, with the stories behind each dish.'},
+{id:10,t:'Paper Moons',a:'Leah Brandt',c:'Young adult',p:18.99,rb:0,d:'Ages 13 and up. A school production, a missing lead and a town that cannot keep a secret.'},
+{id:11,t:'Gum Tree Letters',a:'Tom Whitfield',c:'Australian literature',p:27.99,rb:1,d:'Verse and short prose from a decade of country posts. Winner of a regional writing prize.'},
+{id:12,t:'The Last Bookbinder',a:'Ingrid Sol',c:'Historical',p:26.99,rb:0,d:'1920s Melbourne. A bookbinder\'s apprentice finds a hidden ledger in a rebound atlas.'}
+];
+BOOKS.forEach(function(b,i){b.col=COLORS[i%COLORS.length]});
+var STORES=[
+{id:'collins',n:'Collins Street',loc:'Melbourne CBD',type:'Company',hrs:'Mon to Sat 9am to 6pm, Sun 10am to 5pm',ev:'Author signings, kids story time'},
+{id:'chadstone',n:'Chadstone',loc:'Chadstone Shopping Centre',type:'Company',hrs:'Daily 9am to 9pm',ev:'Book club nights'},
+{id:'bayswater',n:'Eastpoint',loc:'Eastpoint Shopping Centre, Bayswater',type:'Franchise',hrs:'Mon to Sat 9am to 5:30pm, Sun 10am to 4pm',ev:'Story time, school visits'},
+{id:'geelong',n:'Geelong',loc:'Pakington Street, Geelong West',type:'Franchise',hrs:'Mon to Sat 9am to 5pm',ev:'Local author nights'},
+{id:'ballarat',n:'Ballarat',loc:'Sturt Street, Ballarat',type:'Company',hrs:'Mon to Sat 9am to 5:30pm',ev:'Book club nights'}
+];
+function stockFor(b,s){var n=(b.id*7+s.length*3+s.charCodeAt(0))%11;return n<2?0:n<4?(b.id%2?2:3):n}
+var EVENTS=[
+{id:'e1',d:'13',m:'Mar',n:'Meet Veronica Watson: The Lantern Year signing',s:'collins',t:'Sat 2pm',x:'Hear her read from her new novel and get your copy signed. Tea and biscuits provided.'},
+{id:'e2',d:'20',m:'Mar',n:'Kids story time and craft morning',s:'bayswater',t:'Sat 10am',x:'Free for ages 4 to 8. Stories, a short craft activity and a treasure hunt through the children\'s section.'},
+{id:'e3',d:'27',m:'Mar',n:'Book club night with Dr Jonathan Croft',s:'chadstone',t:'Thu 6:30pm',x:'Ledger of Small Hours discussion, hosted by the author. Come with questions.'},
+{id:'e4',d:'10',m:'Apr',n:'Self-publishing workshop for first-time authors',s:'collins',t:'Sat 11am',x:'Editing, cover design, ISBNs and distribution. Led by the Rainbow Publishing team.'}
+];
+var S={route:'home',cart:[],bookId:null,filter:{cat:'All',store:'any',inStock:false,sort:'rel',q:''},co:{delivery:'collect',store:'collins',slot:'Tomorrow, 10am to 12pm',method:'card',promo:''},order:null,booked:{},openEvt:null,pub:null,role:null,portal:null,tier:'pro',stockOrder:null,settled:{},toast:'',store:'collins'};
+var $=function(s){return document.querySelector(s)};
+function money(n){return '$'+n.toFixed(2)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function book(id){return BOOKS.filter(function(b){return b.id===id})[0]}
+function store(id){return STORES.filter(function(s){return s.id===id})[0]}
+var FORMATS={paper:{n:'Paperback',f:1},ebook:{n:'E-book',f:0.6},pod:{n:'Print on demand (in store, ready in 20 min)',f:1.1}};
+function fprice(b,f){return Math.round(b.p*FORMATS[f].f*100)/100}
+function cover(b,big){return '<button class="cover" data-book="'+b.id+'" style="background:linear-gradient(160deg,'+b.col[0]+','+b.col[1]+')" aria-label="View '+esc(b.t)+'"><span>'+(b.rb?'Rainbow Publishing':b.c)+'</span><b>'+esc(b.t)+'</b><span>'+esc(b.a)+'</span></button>'}
+function sub(){return S.cart.reduce(function(t,i){return t+fprice(book(i.id),i.f)*i.q},0)}
+function ship(){return S.co.delivery==='home'&&sub()<60&&S.cart.length?8.95:0}
+function disc(){return S.co.promo.toUpperCase()==='READER10'?sub()*0.1:0}
+function total(){return sub()-disc()+ship()}
+function count(){return S.cart.reduce(function(t,i){return t+i.q},0)}
+var NAV=[['shop','Shop'],['events','Events'],['publish','Publish with us'],['stores','Stores'],['portal','Partner portal']];
+function chrome(){
+  $('#nav').innerHTML=NAV.map(function(n){return '<button data-go="'+n[0]+'"'+(S.route===n[0]?' aria-current="page"':'')+'>'+n[1]+'</button>'}).join('');
+  $('#count').textContent=count();
+}
+function go(r){S.route=r;S.toast='';render();window.scrollTo(0,0)}
+/* ---------- views ---------- */
+function vHome(){
+  var feat=[1,11,4,7].map(book);
+  return '<section class="hero"><div><div class="eyebrow">Books at the end of the rainbow</div><h1 style="margin-top:10px">Find it in store, order it online, collect it in two hours.</h1><p class="lead">Live stock from every Rainbow Books store, author events every week and a publishing service that treats writers properly.</p>'+
+  '<form class="search" id="herosearch" style="margin-top:22px;max-width:520px"><input id="hq" type="search" style="width:100%" placeholder="Search by title, author or ISBN" aria-label="Search"><button class="btn" type="submit">Search</button></form>'+
+  '<div class="cta"><button class="btn" data-go="shop">Browse all books</button><button class="btn ghost" data-go="events">What\'s on in store</button></div></div>'+
+  '<div class="shelf">'+feat.slice(0,3).map(function(b,i){return '<div style="width:'+(i==1?150:120)+'px;max-width:32%">'+cover(b)+'</div>'}).join('')+'</div></section>'+
+  '<div class="tiles">'+
+  tile('var(--s5)','Click and collect','Pick a store and a time slot. Stock shown is live, so what you reserve is on the shelf.','shop','Shop and reserve')+
+  tile('var(--s4)','Events and book clubs','Author signings, kids story time and discussion nights at company and franchise stores.','events','See events')+
+  tile('var(--s6)','Publish with Rainbow','Three service levels for self-publishing authors, with print on demand in store.','publish','See the services')+
+  '</div><div class="sect"><h2>Featured this week</h2><button class="link" data-go="shop">See all books</button></div><div class="grid">'+feat.map(card).join('')+'</div>'
+}
+function tile(c,h,p,r,b){return '<div class="tile"><div class="mark" style="background:'+c+'"></div><h3>'+h+'</h3><p>'+p+'</p><button class="btn ghost small" data-go="'+r+'">'+b+'</button></div>'}
+function card(b){
+  var st=stockFor(b,S.store);
+  return '<article class="card">'+cover(b)+'<h3>'+esc(b.t)+'</h3><div class="meta">'+esc(b.a)+'</div><div class="price">'+money(b.p)+'</div>'+
+  '<span class="chip '+(st>3?'ok':st>0?'warn':'bad')+'">'+(st>3?'In stock':st>0?'Only '+st+' left':'Out of stock')+'</span>'+
+  '<button class="btn small" data-add="'+b.id+'">Add to cart</button></article>'
+}
+function list(){
+  var f=S.filter,q=f.q.toLowerCase();
+  var r=BOOKS.filter(function(b){
+    if(f.cat!=='All'&&b.c!==f.cat)return false;
+    if(q&&(b.t+' '+b.a).toLowerCase().indexOf(q)<0)return false;
+    if(f.inStock&&stockFor(b,S.store)===0)return false;return true});
+  if(f.sort==='pl')r.sort(function(a,b){return a.p-b.p});
+  if(f.sort==='ph')r.sort(function(a,b){return b.p-a.p});
+  if(f.sort==='az')r.sort(function(a,b){return a.t.localeCompare(b.t)});
+  return r;
+}
+function vShop(){
+  var cats=['All'].concat(BOOKS.map(function(b){return b.c}).filter(function(c,i,a){return a.indexOf(c)===i}));
+  var r=list(),f=S.filter;
+  return '<div class="crumbs">Home / Shop</div><div class="layout"><aside class="panel" aria-label="Filters"><h3 style="margin-bottom:14px">Refine</h3>'+
+  '<div class="field"><label for="fcat">Category</label><select id="fcat">'+cats.map(function(c){return '<option'+(c===f.cat?' selected':'')+'>'+c+'</option>'}).join('')+'</select></div>'+
+  '<div class="field"><label for="fstore">My store</label><select id="fstore">'+STORES.map(function(s){return '<option value="'+s.id+'"'+(s.id===S.store?' selected':'')+'>'+s.n+' ('+s.type+')</option>'}).join('')+'</select></div>'+
+  '<label class="check"><input type="checkbox" id="fstock"'+(f.inStock?' checked':'')+'> In stock at my store</label>'+
+  '<div class="field"><label for="fsort">Sort by</label><select id="fsort">'+[['rel','Relevance'],['az','Title A to Z'],['pl','Price, low to high'],['ph','Price, high to low']].map(function(o){return '<option value="'+o[0]+'"'+(o[0]===f.sort?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select></div>'+
+  '<button class="btn ghost small" data-action="reset">Clear filters</button></aside>'+
+  '<section><div class="sect"><h2>'+(f.q?'Results for "'+esc(f.q)+'"':'All books')+'</h2><span class="meta">'+r.length+' titles, stock shown for '+store(S.store).n+'</span></div>'+
+  (r.length?'<div class="grid">'+r.map(card).join('')+'</div>':'<div class="panel">No books match these filters. Try clearing the category or the in-stock filter.</div>')+'</section></div>'
+}
+function vBook(){
+  var b=book(S.bookId); if(!b)return vShop();
+  var fm=S.fmt||'paper',qty=S.qty||1;
+  return '<div class="crumbs"><button data-go="shop">Shop</button> / '+esc(b.c)+' / '+esc(b.t)+'</div><div class="detail"><div style="max-width:260px;width:100%">'+cover(b)+'</div><div>'+
+  '<div class="eyebrow">'+(b.rb?'Published by Rainbow Publishing':b.c)+'</div><h1 style="font-size:2.2rem;margin-block:6px">'+esc(b.t)+'</h1><p class="meta" style="font-size:1.05rem">by '+esc(b.a)+'</p><p style="margin-top:14px;max-width:60ch">'+esc(b.d)+'</p>'+
+  '<div class="panel" style="margin-top:18px"><fieldset style="border:0;padding:0;margin:0"><legend class="legend" style="margin-bottom:8px">Choose a format</legend><div class="opts">'+
+  Object.keys(FORMATS).map(function(k){return '<label class="opt"><input type="radio" name="fmt" value="'+k+'"'+(fm===k?' checked':'')+'><span>'+FORMATS[k].n+'<small>'+(k==='ebook'?'Instant download to the Rainbow Books app':k==='pod'?'Printed while you wait at selected stores':'Ships or collect from store')+'</small></span><b style="margin-left:auto">'+money(fprice(b,k))+'</b></label>'}).join('')+'</div></fieldset>'+
+  '<div class="field" style="margin-top:14px;max-width:140px"><label for="bq">Quantity</label><select id="bq">'+[1,2,3,4,5].map(function(n){return '<option'+(n===qty?' selected':'')+'>'+n+'</option>'}).join('')+'</select></div>'+
+  '<button class="btn" data-add="'+b.id+'" data-detail="1">Add to cart</button></div>'+
+  '<div class="panel"><h3 style="margin-bottom:10px">Stock in stores</h3><div class="tablewrap"><table><thead><tr><th>Store</th><th>Type</th><th class="num">On shelf</th><th>Status</th></tr></thead><tbody>'+
+  STORES.map(function(s){var n=stockFor(b,s.id);return '<tr><td>'+s.n+'</td><td>'+s.type+'</td><td class="num">'+n+'</td><td><span class="chip '+(n>3?'ok':n>0?'warn':'bad')+'">'+(n>3?'In stock':n>0?'Low stock':'Out of stock')+'</span></td></tr>'}).join('')+'</tbody></table></div><p class="meta" style="margin-top:8px">Stock is updated automatically from store sales, for company and franchise stores alike.</p></div></div></div>'
+}
+function vCart(){
+  if(!S.cart.length)return '<h1 style="font-size:2rem">Your cart is empty</h1><p class="meta" style="margin-block:10px 18px">Add a book to reserve it for click and collect or home delivery.</p><button class="btn" data-go="shop">Browse books</button>';
+  return '<h1 style="font-size:2rem;margin-bottom:18px">Your cart</h1><div class="two"><div class="panel"><div class="tablewrap"><table><thead><tr><th>Item</th><th>Format</th><th>Quantity</th><th class="num">Price</th><th><span class="meta">Remove</span></th></tr></thead><tbody>'+
+  S.cart.map(function(i,ix){var b=book(i.id);return '<tr><td><strong>'+esc(b.t)+'</strong><div class="meta">'+esc(b.a)+'</div></td><td>'+FORMATS[i.f].n.split(' (')[0]+'</td><td><span class="qty"><button data-qty="'+ix+'" data-d="-1" aria-label="Fewer">-</button><span>'+i.q+'</span><button data-qty="'+ix+'" data-d="1" aria-label="More">+</button></span></td><td class="num">'+money(fprice(b,i.f)*i.q)+'</td><td><button class="link" data-del="'+ix+'">Remove</button></td></tr>'}).join('')+'</tbody></table></div>'+
+  '<div class="field" style="max-width:280px;margin-top:16px"><label for="promo">Promo code</label><div style="display:flex;gap:8px"><input id="promo" placeholder="Try READER10" value="'+esc(S.co.promo)+'"><button class="btn ghost small" data-action="promo">Apply</button></div></div></div>'+
+  '<aside class="panel sum"><h3 style="margin-bottom:8px">Order summary</h3><div><span>Subtotal</span><span>'+money(sub())+'</span></div>'+(disc()?'<div><span>Promo READER10</span><span>-'+money(disc())+'</span></div>':'')+'<div><span>Delivery</span><span>Chosen at checkout</span></div><div class="tot"><span>Estimated total</span><span>'+money(sub()-disc())+'</span></div><button class="btn" style="width:100%;margin-top:14px" data-go="checkout">Go to checkout</button><button class="btn ghost" style="width:100%;margin-top:8px" data-go="shop">Keep shopping</button></aside></div>'
+}
+function vCheckout(){
+  if(!S.cart.length)return vCart();
+  var c=S.co;
+  return '<div class="steps"><span class="step">1 Cart</span><span class="step on">2 Delivery and payment</span><span class="step">3 Confirmation</span></div><h1 style="font-size:2rem;margin-bottom:18px">Checkout</h1>'+
+  '<form id="coform" class="two"><div><div class="panel"><h3 style="margin-bottom:12px">Your details</h3><div class="row2"><div class="field"><label for="cn">Full name</label><input id="cn" required value="Demo Customer" autocomplete="off"></div><div class="field"><label for="ce">Email</label><input id="ce" type="email" required value="demo@rainbowbooks.example" autocomplete="off"></div></div><div class="field" style="max-width:300px"><label for="cp">Mobile (for pickup text)</label><input id="cp" value="0400 000 000" autocomplete="off"></div></div>'+
+  '<div class="panel"><fieldset style="border:0;padding:0;margin:0"><legend class="legend" style="margin-bottom:10px">Delivery</legend><div class="opts"><label class="opt"><input type="radio" name="dl" value="collect"'+(c.delivery==='collect'?' checked':'')+'><span>Click and collect<small>Free. Ready in 2 hours when the store is open.</small></span><b style="margin-left:auto">Free</b></label><label class="opt"><input type="radio" name="dl" value="home"'+(c.delivery==='home'?' checked':'')+'><span>Home delivery<small>2 to 4 business days. Free over $60.</small></span><b style="margin-left:auto">$8.95</b></label></div></fieldset>'+
+  (c.delivery==='collect'?'<div class="row2" style="margin-top:14px"><div class="field"><label for="cs">Pickup store</label><select id="cs">'+STORES.map(function(s){return '<option value="'+s.id+'"'+(s.id===c.store?' selected':'')+'>'+s.n+' ('+s.type+')</option>'}).join('')+'</select></div><div class="field"><label for="ct">Time slot</label><select id="ct">'+['Today, 4pm to 6pm','Tomorrow, 10am to 12pm','Tomorrow, 1pm to 3pm','Saturday, 10am to 12pm'].map(function(t){return '<option'+(t===c.slot?' selected':'')+'>'+t+'</option>'}).join('')+'</select></div></div>':
+  '<div class="field" style="margin-top:14px"><label for="ca">Street address</label><input id="ca" required value="1 Example Street, Melbourne VIC 3000" autocomplete="off"></div>')+'</div>'+
+  '<div class="panel"><fieldset style="border:0;padding:0;margin:0"><legend class="legend" style="margin-bottom:10px">Payment method</legend><div class="opts"><label class="opt"><input type="radio" name="pm" value="card"'+(c.method==='card'?' checked':'')+'><span>Credit or debit card</span></label><label class="opt"><input type="radio" name="pm" value="wallet"'+(c.method==='wallet'?' checked':'')+'><span>Digital wallet</span></label><label class="opt"><input type="radio" name="pm" value="gift"'+(c.method==='gift'?' checked':'')+'><span>Rainbow Books gift card</span></label></div></fieldset>'+
+  '<div class="notice" style="margin-top:14px">Prototype payment form. Nothing you type here is sent, stored or charged.</div>'+
+  (c.method==='card'?'<div class="field"><label for="cc">Card number</label><input id="cc" inputmode="numeric" value="0000 0000 0000 0000" autocomplete="off"></div><div class="row2"><div class="field"><label for="cx">Expiry (MM/YY)</label><input id="cx" value="12/30" autocomplete="off"></div><div class="field"><label for="cv">Security code</label><input id="cv" value="000" autocomplete="off"></div></div>':c.method==='wallet'?'<p class="meta">You would continue in your wallet app to approve the payment.</p>':'<div class="field" style="max-width:300px"><label for="gc">Gift card number</label><input id="gc" value="0000 0000" autocomplete="off"></div>')+'</div>'+
+  '<label class="check"><input type="checkbox" id="terms" required> I accept the terms of sale and the returns policy</label></div>'+
+  '<aside class="panel sum"><h3 style="margin-bottom:8px">Order summary</h3>'+S.cart.map(function(i){var b=book(i.id);return '<div><span>'+esc(b.t)+' x'+i.q+'</span><span>'+money(fprice(b,i.f)*i.q)+'</span></div>'}).join('')+'<div style="border-top:1px solid var(--line);margin-top:6px"><span>Subtotal</span><span>'+money(sub())+'</span></div>'+(disc()?'<div><span>Promo</span><span>-'+money(disc())+'</span></div>':'')+'<div><span>Delivery</span><span>'+(ship()?money(ship()):'Free')+'</span></div><div class="tot"><span>Total</span><span>'+money(total())+'</span></div><button class="btn" style="width:100%;margin-top:14px" type="submit">Place order</button><button class="btn ghost" style="width:100%;margin-top:8px" type="button" data-go="cart">Back to cart</button></aside></form>'
+}
+function vDone(){
+  var o=S.order; if(!o)return vHome();
+  var st=o.delivery==='collect'?['Order placed','Picked in store','Ready to collect']:['Order placed','Packed at warehouse','On its way'];
+  return '<div class="steps"><span class="step">1 Cart</span><span class="step">2 Delivery and payment</span><span class="step on">3 Confirmation</span></div><div class="panel" style="max-width:760px"><span class="chip ok">Order received</span><h1 style="font-size:2rem;margin-block:10px">Thanks, '+esc(o.name)+'. Your order is in.</h1><p>Order number <strong>'+o.no+'</strong>. A confirmation would be emailed to '+esc(o.email)+'.</p>'+
+  '<div class="track"><div class="on">'+st[0]+'</div><div>'+st[1]+'</div><div>'+st[2]+'</div></div>'+
+  '<p>'+(o.delivery==='collect'?'<strong>Pickup:</strong> '+store(o.store).n+' ('+store(o.store).type+' store), '+o.slot+'. Bring your order number.':'<strong>Delivery:</strong> to your address in 2 to 4 business days.')+'</p>'+
+  '<div class="tablewrap" style="margin-top:14px"><table><tbody>'+o.items.map(function(i){return '<tr><td>'+esc(i.t)+' ('+i.f+') x'+i.q+'</td><td class="num">'+money(i.v)+'</td></tr>'}).join('')+'<tr><td><strong>Total paid (demo)</strong></td><td class="num"><strong>'+money(o.total)+'</strong></td></tr></tbody></table></div>'+
+  '<div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap"><button class="btn" data-go="shop">Continue shopping</button><button class="btn ghost" data-go="events">See events near you</button></div></div>'
+}
+function vEvents(){
+  return '<h1 style="font-size:2.2rem">Events and book clubs</h1><p class="meta" style="margin-block:8px 22px;max-width:60ch">Every Rainbow Books store, company-owned or franchise, can host an event. Reserve a seat below.</p><div style="display:flex;flex-direction:column;gap:14px">'+
+  EVENTS.map(function(e){var st=store(e.s);var open=S.openEvt===e.id;
+  return '<article class="panel"><div class="evt"><div class="date"><b>'+e.d+'</b><span>'+e.m+'</span></div><div><h3>'+esc(e.n)+'</h3><p class="meta">'+e.t+' at '+st.n+' <span class="chip info">'+st.type+'</span></p><p style="margin-top:6px">'+esc(e.x)+'</p></div>'+
+  (S.booked[e.id]?'<span class="chip ok">Seat reserved</span>':'<button class="btn small" data-evt="'+e.id+'">'+(open?'Close':'Reserve a seat')+'</button>')+'</div>'+
+  (open&&!S.booked[e.id]?'<form class="evform" data-ev="'+e.id+'" style="margin-top:16px;border-top:1px solid var(--line);padding-top:16px"><div class="row2"><div class="field"><label for="en'+e.id+'">Name</label><input id="en'+e.id+'" required value="Demo Customer" autocomplete="off"></div><div class="field"><label for="ee'+e.id+'">Email</label><input id="ee'+e.id+'" type="email" required value="demo@rainbowbooks.example" autocomplete="off"></div></div><div class="row2"><div class="field"><label for="es'+e.id+'">Seats</label><select id="es'+e.id+'">'+[1,2,3,4].map(function(n){return '<option>'+n+'</option>'}).join('')+'</select></div><div class="field"><label for="eb'+e.id+'">Bring a copy to be signed?</label><select id="eb'+e.id+'"><option>No</option><option>Yes</option></select></div></div><label class="check"><input type="checkbox" checked> Send me reminders about events at this store</label><button class="btn" type="submit">Confirm reservation</button></form>':'')+
+  (S.booked[e.id]?'<div class="okmsg">Reserved for '+S.booked[e.id]+' (demo). A reminder would be sent the day before.</div>':'')+'</article>'}).join('')+'</div>'
+}
+function vPublish(){
+  var T=[['ess','Essentials','$490','One-off',['Manuscript check and style report','ISBN and barcode','E-book file preparation','Listing on rainbowbooks.example']],
+  ['pro','Professional','$1,950','Most chosen',['Everything in Essentials','Full copy edit and proofread','Cover design, two rounds','Print on demand in every store','E-book on other retailers']],
+  ['full','Full service','By quote','Selected titles',['Everything in Professional','Editorial assessment by Rainbow Publishing','Shelf placement in Rainbow stores','Launch event and author tour','Royalty reports every six months, on time']]];
+  return '<h1 style="font-size:2.2rem">Publish with Rainbow</h1><p class="meta" style="margin-block:8px 22px;max-width:62ch">Choose the level of help you want. You keep control of your book, and you can see sales and royalties online at any time.</p><div class="tiers">'+
+  T.map(function(t){return '<article class="panel tier'+(S.tier===t[0]?' pick':'')+'"><span class="chip info">'+t[3]+'</span><h3 style="margin-top:8px">'+t[1]+'</h3><p class="price" style="font-size:1.5rem;margin-block:4px">'+t[2]+'</p><ul>'+t[4].map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul><button class="btn'+(S.tier===t[0]?'':' ghost')+' small" style="margin-top:14px" data-tier="'+t[0]+'">'+(S.tier===t[0]?'Selected':'Choose '+t[1])+'</button></article>'}).join('')+'</div>'+
+  '<div class="panel" style="margin-top:22px;max-width:760px"><h2 style="margin-bottom:14px">Send us your manuscript</h2>'+(S.pub?'<div class="okmsg">Thanks, '+esc(S.pub.n)+'. We have recorded "'+esc(S.pub.t)+'" on the '+S.pub.tier+' service (demo). An editor would reply within 10 business days.</div><button class="btn ghost small" style="margin-top:12px" data-action="pubagain">Submit another</button>':
+  '<form id="pubform"><div class="row2"><div class="field"><label for="pn">Your name</label><input id="pn" required value="Demo Author" autocomplete="off"></div><div class="field"><label for="pe">Email</label><input id="pe" type="email" required value="author@rainbowbooks.example" autocomplete="off"></div></div><div class="row2"><div class="field"><label for="pt">Working title</label><input id="pt" required value="My First Novel" autocomplete="off"></div><div class="field"><label for="pg">Genre</label><select id="pg">'+['Fiction','Non-fiction','Children','Poetry','Memoir'].map(function(g){return '<option>'+g+'</option>'}).join('')+'</select></div></div><div class="field"><label for="pf">Manuscript file (.docx or .pdf)</label><input id="pf" type="file" accept=".doc,.docx,.pdf"></div><div class="field"><label for="pm">Tell us about your book</label><textarea id="pm" rows="3">A short description of the story and who it is for.</textarea></div><button class="btn" type="submit">Submit manuscript</button></form>')+'</div>'
+}
+function vStores(){
+  return '<h1 style="font-size:2.2rem">Our stores</h1><p class="meta" style="margin-block:8px 22px;max-width:60ch">Company-owned and franchise stores share the same stock system, events calendar and online ordering.</p><div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">'+
+  STORES.map(function(s){return '<article class="card" style="gap:6px"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><h3>'+s.n+'</h3><span class="chip '+(s.type==='Company'?'info':'warn')+'">'+s.type+'</span></div><div>'+s.loc+'</div><div class="meta">'+s.hrs+'</div><div class="meta">Events: '+s.ev+'</div><button class="btn small'+(S.store===s.id?'':' ghost')+'" style="align-self:flex-start;margin-top:8px" data-mystore="'+s.id+'">'+(S.store===s.id?'My store':'Set as my store')+'</button></article>'}).join('')+'</div>'
+}
+var STOCKROWS=[[1,'The Lantern Year',0,5],[4,'Where the River Bends',0,4],[5,'Tide Pool Detectives',0,4],[7,'The Night Shift Club',0,3],[9,'Seven Kitchens',0,3]];
+function vPortal(){
+  if(!S.portal)return '<div style="max-width:520px;margin:0 auto"><h1 style="font-size:2rem">Partner portal</h1><p class="meta" style="margin-block:8px 18px">For franchisees, authors and head office staff.</p><form id="loginform" class="panel"><div class="notice">Prototype sign-in. Use the demo details below. No real accounts exist and nothing is sent.</div><div class="field"><label for="lr">I am a</label><select id="lr"><option value="franchisee">Franchisee</option><option value="author">Author</option></select></div><div class="field"><label for="le">Email</label><input id="le" type="email" value="demo@rainbowbooks.example" autocomplete="off"></div><div class="field"><label for="lp">Password</label><input id="lp" type="password" value="prototype" autocomplete="off"></div><button class="btn" type="submit" style="width:100%">Sign in</button></form></div>';
+  if(S.portal==='franchisee'){
+    return '<div class="sect"><div><div class="eyebrow">Franchise store</div><h1 style="font-size:2rem">Eastpoint, Bayswater</h1></div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="chip ok">Connected</span><span class="meta">Stock synced 2 minutes ago</span><button class="btn ghost small" data-action="signout">Sign out</button></div></div>'+
+    '<div class="two"><div><div class="panel"><h2 style="margin-bottom:12px">Stock and reordering</h2><div class="tablewrap"><table><thead><tr><th>Title</th><th class="num">On hand</th><th class="num">Reorder at</th><th>Status</th><th class="num">Order qty</th></tr></thead><tbody>'+
+    STOCKROWS.map(function(r){var oh=stockFor(book(r[0]),'bayswater'),low=oh<=r[3];return '<tr><td>'+r[1]+'</td><td class="num">'+oh+'</td><td class="num">'+r[3]+'</td><td><span class="chip '+(oh<=2?'bad':low?'warn':'ok')+'">'+(oh<=2?'Reorder now':low?'Low':'OK')+'</span></td><td class="num"><input aria-label="Order quantity for '+esc(r[1])+'" type="number" min="0" value="'+(low?10:0)+'" style="width:70px;border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:4px 6px"></td></tr>'}).join('')+'</tbody></table></div>'+
+    '<div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap"><button class="btn" data-action="stockorder">Send stock order to warehouse</button></div>'+(S.stockOrder?'<div class="okmsg">Order '+S.stockOrder+' sent (demo). The warehouse status updates here, so you can see when it arrives.</div>':'')+'</div>'+
+    '<div class="panel"><h2 style="margin-bottom:12px">Report a system problem</h2><form id="issueform"><div class="row2"><div class="field"><label for="ik">Problem</label><select id="ik"><option>Cannot connect to stock system</option><option>Online order not showing</option><option>Wrong stock count</option><option>Other</option></select></div><div class="field"><label for="iu">How urgent?</label><select id="iu"><option>Stopping trade</option><option>Slowing us down</option><option>Can wait</option></select></div></div><div class="field"><label for="id">What happened?</label><textarea id="id" rows="2">Describe what you were doing when it happened.</textarea></div><button class="btn ghost" type="submit">Send to IT support</button>'+(S.settled.issue?'<div class="okmsg">Ticket '+S.settled.issue+' logged (demo). You can follow its progress under Support.</div>':'')+'</form></div></div>'+
+    '<aside class="panel"><h3 style="margin-bottom:10px">Head office notices</h3><div style="display:flex;flex-direction:column;gap:12px"><div><strong>New price list from Monday</strong><p class="meta">Applies to company and franchise stores equally.</p></div><div><strong>Author signing at Collins Street</strong><p class="meta">Promoted on the website for all stores this month.</p></div><div><strong>Planned maintenance, Sun 2am</strong><p class="meta">Stock sync pauses for 20 minutes.</p></div></div></aside></div>'
+  }
+  return '<div class="sect"><div><div class="eyebrow">Author account</div><h1 style="font-size:2rem">Royalty statements</h1></div><div style="display:flex;gap:10px;align-items:center"><span class="meta">Veronica Watson (demo)</span><button class="btn ghost small" data-action="signout">Sign out</button></div></div>'+
+  '<div class="panel"><div class="row2" style="max-width:520px"><div class="field"><label for="rp">Statement period</label><select id="rp"><option>1 Jan to 30 Jun</option><option>1 Jul to 31 Dec</option></select></div><div class="field"><label for="rt">Title</label><select id="rt"><option>All titles</option><option>The Lantern Year</option><option>Salt Roads</option></select></div></div>'+
+  '<div class="tablewrap"><table><thead><tr><th>Title</th><th>Format</th><th class="num">Units sold</th><th class="num">Royalty rate</th><th class="num">Royalty</th></tr></thead><tbody>'+
+  [['The Lantern Year','Print',1240,'12%',3713.28],['The Lantern Year','E-book',860,'25%',3225.78],['Salt Roads','Print',410,'12%',1129.17],['Salt Roads','E-book',290,'25%',1100.60]].map(function(r){return '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td class="num">'+r[2]+'</td><td class="num">'+r[3]+'</td><td class="num">'+money(r[4])+'</td></tr>'}).join('')+'<tr><td colspan="4"><strong>Total royalties for the period</strong></td><td class="num"><strong>'+money(9168.83)+'</strong></td></tr></tbody></table></div>'+
+  '<div style="display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap"><span class="chip ok">Issued 3 days after period end</span><button class="btn ghost small" data-action="query">Ask about a line</button></div>'+(S.settled.query?'<form id="qform" style="margin-top:14px;max-width:520px"><div class="field"><label for="qt">Your question</label><textarea id="qt" rows="2">Why is the e-book rate different from print?</textarea></div><button class="btn small" type="submit">Send question</button>'+(S.settled.qsent?'<div class="okmsg">Question logged (demo). The publishing team replies within 2 business days.</div>':'')+'</form>':'')+'</div>'
+}
+var VIEWS={home:vHome,shop:vShop,book:vBook,cart:vCart,checkout:vCheckout,done:vDone,events:vEvents,publish:vPublish,stores:vStores,portal:vPortal};
+function render(){chrome();$('#view').innerHTML=(VIEWS[S.route]||vHome)()}
+/* ---------- events ---------- */
+document.addEventListener('click',function(e){
+  var t=e.target.closest('[data-go],[data-book],[data-add],[data-qty],[data-del],[data-action],[data-evt],[data-tier],[data-mystore]');if(!t)return;
+  var d=t.dataset;
+  if(d.go){go(d.go);return}
+  if(d.book){S.bookId=+d.book;S.fmt='paper';S.qty=1;go('book');return}
+  if(d.add){var id=+d.add,f=d.detail?(S.fmt||'paper'):'paper',q=d.detail?(S.qty||1):1;var ex=S.cart.filter(function(i){return i.id===id&&i.f===f})[0];if(ex)ex.q+=q;else S.cart.push({id:id,f:f,q:q});chrome();var old=t.textContent;t.textContent='Added';setTimeout(function(){t.textContent=old},900);return}
+  if(d.qty!==undefined){var it=S.cart[+d.qty];it.q=Math.max(1,it.q+ +d.d);render();return}
+  if(d.del!==undefined){S.cart.splice(+d.del,1);render();return}
+  if(d.evt){S.openEvt=S.openEvt===d.evt?null:d.evt;render();return}
+  if(d.tier){S.tier=d.tier;render();return}
+  if(d.mystore){S.store=d.mystore;S.co.store=d.mystore;render();return}
+  if(d.action==='reset'){S.filter={cat:'All',store:'any',inStock:false,sort:'rel',q:''};render()}
+  if(d.action==='promo'){S.co.promo=$('#promo').value.trim();render()}
+  if(d.action==='pubagain'){S.pub=null;render()}
+  if(d.action==='signout'){S.portal=null;S.stockOrder=null;S.settled={};render()}
+  if(d.action==='stockorder'){S.stockOrder='RB-PO-'+(40000+Math.floor(Math.random()*9999));render()}
+  if(d.action==='query'){S.settled.query=true;render()}
+});
+document.addEventListener('change',function(e){
+  var t=e.target,id=t.id;
+  if(id==='fcat'){S.filter.cat=t.value;render()}
+  if(id==='fstore'){S.store=t.value;S.co.store=t.value;render()}
+  if(id==='fstock'){S.filter.inStock=t.checked;render()}
+  if(id==='fsort'){S.filter.sort=t.value;render()}
+  if(t.name==='fmt'){S.fmt=t.value;render()}
+  if(id==='bq'){S.qty=+t.value}
+  if(t.name==='dl'){S.co.delivery=t.value;render()}
+  if(t.name==='pm'){S.co.method=t.value;render()}
+  if(id==='cs')S.co.store=t.value;
+  if(id==='ct')S.co.slot=t.value;
+});
+document.addEventListener('submit',function(e){
+  var f=e.target;e.preventDefault();
+  if(f.id==='topsearch'||f.id==='herosearch'){S.filter.q=(f.querySelector('input').value||'').trim();S.filter.cat='All';go('shop')}
+  else if(f.id==='coform'){var o={no:'RB-27-'+(30000+Math.floor(Math.random()*60000)),name:$('#cn').value,email:$('#ce').value,delivery:S.co.delivery,store:S.co.store,slot:S.co.slot,total:total(),items:S.cart.map(function(i){var b=book(i.id);return {t:b.t,f:FORMATS[i.f].n.split(' (')[0],q:i.q,v:fprice(b,i.f)*i.q}})};S.order=o;S.cart=[];S.co.promo='';go('done')}
+  else if(f.id==='pubform'){S.pub={n:$('#pn').value,t:$('#pt').value,tier:{ess:'Essentials',pro:'Professional',full:'Full service'}[S.tier]};render()}
+  else if(f.id==='loginform'){S.portal=$('#lr').value;render()}
+  else if(f.id==='issueform'){S.settled.issue='RB-IT-'+(1000+Math.floor(Math.random()*8999));render()}
+  else if(f.id==='qform'){S.settled.qsent=true;render()}
+  else if(f.classList.contains('evform')){var id=f.dataset.ev;S.booked[id]=f.querySelector('select').value+(f.querySelector('select').value==='1'?' seat':' seats');S.openEvt=null;render()}
+});
+var h=(location.hash||'').replace('#','');if(VIEWS[h]&&h!=='book'&&h!=='done')S.route=h;
+window.__rb={S:S,render:render,go:go};
+render();
+})();
+</script>
+</body></html>
